@@ -1,0 +1,13 @@
+fastapi
+python-multipart
+uvicorn
+datetime
+uuid
+dash
+pandas
+regex
+flask
+jinja2
+openpyxl
+scikit-learn
+flask

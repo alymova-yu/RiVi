@@ -1,0 +1,36 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 1100px; /* FIX IT TO 1100px !!! */
+  margin: 0 auto;
+  position: relative;
+  font-family: Raleway, sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+ul,
+ol,
+li,
+blockquote {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+}
+
+input,
+textarea {
+  font-family: inherit;
+}

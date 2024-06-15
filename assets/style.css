@@ -1,0 +1,54 @@
+/* Тут лежат стили для дашборда. 
+Можно писать как свои классы, так и переопределять стили для встроенных классов */
+
+
+.title {
+    font-weight: 700;
+    text-align: center;
+    margin-block-start: 50px;
+    margin-block-end: 20px;
+
+}
+
+.subtitle {
+    font-weight: 500;
+    text-align: center;
+    margin-block-end: 50px;
+
+}
+
+.first__subtitle {
+    font-weight: 500;
+    text-align: center;
+    margin-block: 50px;
+}
+
+.hist__plot {
+    margin-top: -50px;
+}
+
+.tornado__plot {
+    margin-top: -50px;
+}
+
+.list {
+    border: solid 1px red;
+    width: 65%;
+    margin: 0 auto;
+}
+
+.dash-debug-menu {
+    display: none;
+}
+
+.dash-debug-menu__content {
+    display: none;
+}
+
+.modebar-btn--logo {
+    display: none;
+}
+
+.graph-content {
+    margin-inline: 50px;
+}
