@@ -374,4 +374,5 @@ def json_example():
     return newApp.index()
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    context = ('/etc/letsencrypt/live/wf-onco.ru/fullchain.pem', '/etc/letsencrypt/live/wf-onco.ru/privkey.pem')
+    app.run(host='wf-onco.ru', ssl_context=context)
