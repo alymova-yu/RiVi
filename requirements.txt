@@ -4,3 +4,4 @@ regex
 flask
 jinja2
 scikit-learn
+openpyxl
