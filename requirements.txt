@@ -5,3 +5,4 @@ flask
 jinja2
 scikit-learn
 openpyxl
+scipy
