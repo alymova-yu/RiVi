@@ -965,8 +965,8 @@ app.clientside_callback(
 if __name__ == '__main__':
     
     # закомментировать перед деплоем
-    app.run(debug=False)
+    # app.run(debug=False)
 
     # раскомментировать перед деплоем
-    # context = ('/etc/letsencrypt/live/wf-onco.ru/fullchain.pem', '/etc/letsencrypt/live/wf-onco.ru/privkey.pem')
-    # app.run(host='wf-onco.ru', ssl_context=context)
+    context = ('/etc/letsencrypt/live/wf-onco.ru/fullchain.pem', '/etc/letsencrypt/live/wf-onco.ru/privkey.pem')
+    app.run(host='wf-onco.ru', ssl_context=context)
