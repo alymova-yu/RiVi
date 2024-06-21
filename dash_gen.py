@@ -1,4 +1,4 @@
-from dash import Dash, html, dcc, callback, Output, Input, clientside_callback
+from dash import Dash, html, dcc, callback, Output, Input, clientside_callback, State
 import plotly.express as px
 import pandas as pd
 import numpy as np
@@ -348,7 +348,7 @@ def plot_second (arr_all, sorted_labels, sorted_diff, sorted_base):
 title_first = html.H3(children='Распределение целевого параметра', className='first__subtitle')
 title_second = html.H3(children='Диаграмма торнадо', className='subtitle')
 
-logo = html.Img(className='logo', src=r'assets/Рисунок4.png', alt='Логотип RiskVision', id='testts')
+logo = html.Img(className='logo', src=r'assets/Рисунок5.png', alt='Логотип RiskVision', id='testts')
 head_article_first_header = html.H3(children='О сервисе', className='article__subtitle')
 head_article_second_header = html.H3(children='Как пользоваться', className='article__subtitle')
 MK_link = html.A(children='Монте-Карло. ', 
@@ -363,7 +363,7 @@ head_content = html.Div(children=[head_article_first, head_article_second], clas
 main_section = html.Section(children=[logo, head_content], className='section')
 
 iteration_number_lable = html.Label(children='Количество итераций Монте-Карло:')
-iteration_number_input = dcc.Input(type="text", className='iteration_number_input')
+iteration_number_input = dcc.Input(type="text", className='iteration_number_input', value='10000')
 iteration_number = html.Div(children=[iteration_number_lable, iteration_number_input], className='stable__input_place')
 param_p = html.P(children='Параметры', className='article__text')
 button_add_param = html.Button(children='+', className='button__add', type='button', id ='addButtonParam')
@@ -373,13 +373,16 @@ button_add_corr = html.Button(children='+', className='button__add', type='butto
 correlation__space = html.Div(children=[button_add_corr], className='correlation__space')
 
 formula_lable = html.Label(children='Введите формулу: y =')
-formula_input = dcc.Input(type="text", className='formula_input', pattern='^[a-zA-Zа-яёА-ЯЁ\s\+\\.\^\*\-]+$')
+formula_input = dcc.Input(type="text", className='formula_input', pattern='^[a-zA-Zа-яёА-ЯЁ\s\+\\\_\*\-\)\(0-9]+$')
 formula = html.Div(children=[formula_lable, formula_input], className='stable__input_place')
 
 form_content = html.Form(children=[iteration_number, param_p, param_space, corr_p, correlation__space, formula], className='form__content', id='mainForm')
 button_submit = html.Button(children='Рассчитать', className='button__submit', type='button', id='calculateButton')
 form_section = html.Section(children=[form_content, button_submit], className='section__form')
-main = html.Div(children=[main_section, form_section], className='content')
+preloader_content = html.Div(children=[html.Div(), html.Div(), html.Div(), html.Div()], className='lds-ring')
+preload_text = html.Div(children='Идёт расчёт', className='preload_text')
+preload_section = html.Section(children=[preload_text, preloader_content], className='preload_hide', id='preloader')
+main = html.Div(children=[main_section, form_section, preload_section], className='content')
 
 # test_div = html.Div(children='test', id='testDiv')
 # test_div2 = html.Div(children='test2', id='testDiv2')
@@ -728,16 +731,15 @@ app.clientside_callback(
     Output("addButtonCorr","id"),
     Input("addButtonCorr","id")
 )
-# @callback(
-#     Output('testDiv2', 'children'),
-#     Input('calculateButton', 'n_clicks'), prevent_initial_call=True)
-# def set_display_children(val):
-#     return 'fkfk'
+
+
 app.clientside_callback(
     """
     function(id) {
+        const preload = document.getElementById('preloader')
         const cont = document.getElementsByTagName('input')
         const opt = document.getElementsByTagName('select')
+        preload.classList = ['preload_section']
         let temp = 'teaaaa'
         let allInputs = [];
         let allDistr = [];
@@ -765,7 +767,8 @@ app.clientside_callback(
     }
     """,
     Output("getComm","data"),
-    Input("calculateButton","n_clicks")
+    Input("calculateButton","n_clicks"),
+    prevent_initial_call=True
 )
 
 # window.dash_clientside.no_update
@@ -778,6 +781,7 @@ app.clientside_callback(
 
 @callback(
     Output("visPlace","children"),
+    Output("preloader", 'className'),
     Input("getComm","data"),
     prevent_initial_call=True
 )
@@ -814,36 +818,37 @@ def str_to_plot(string):
     correlat = df[df['Тип']=='correlation'].reset_index(drop=True)
     param_df = df[(df['Тип']!='target')&(df['Тип']!='correlation')].reset_index(drop=True)
 
-    # Создаю матрицу корреляции
-    m_set = set(list(correlat['Параметр'].unique()) + list(correlat['Зн1'].unique()))
-    m_size = len(m_set)
-    params = list(m_set)
-    m_corr = np.eye(m_size)
-    m_set
+        # Создаю матрицу корреляции
+    if 'correlation' in df['Тип'].unique():
+        m_set = set(list(correlat['Параметр'].unique()) + list(correlat['Зн1'].unique()))
+        m_size = len(m_set)
+        params = list(m_set)
+        m_corr = np.eye(m_size)
+        m_set
 
-    for _, row in correlat.iterrows():
-        param1 = row['Параметр']
-        param2 = row['Зн1']
-        corr = row['Зн2']
+        for _, row in correlat.iterrows():
+            param1 = row['Параметр']
+            param2 = row['Зн1']
+            corr = row['Зн2']
+            
+            i = params.index(param1)
+            j = params.index(param2)
+            m_corr[i, j] = corr
+            m_corr[j, i] = corr
         
-        i = params.index(param1)
-        j = params.index(param2)
-        m_corr[i, j] = corr
-        m_corr[j, i] = corr
-    
-    # Список параметров для корреляции
-    corr_list = []
-    for i in range(len(params)):
-        a = param_df[param_df['Параметр']==params[i]]['Array'].values[0]
-        corr_list.append(a) 
+        # Список параметров для корреляции
+        corr_list = []
+        for i in range(len(params)):
+            a = param_df[param_df['Параметр']==params[i]]['Array'].values[0]
+            corr_list.append(a) 
 
-    # Сама корреляция
-    corr_list_1 = correlate(corr_list, m_corr)
+        # Сама корреляция
+        corr_list_1 = correlate(corr_list, m_corr)
 
-    # словарь с новыми значениями из corr_list_1
-    update_dict = {param: corr_list_1[i] for i, param in enumerate(params)}
-    # присваивание новых значений
-    df.loc[(df['Параметр'].isin(update_dict.keys()))&(df['Тип']!='correlation'), 'Array'] = df['Параметр'].map(update_dict)
+        # словарь с новыми значениями из corr_list_1
+        update_dict = {param: corr_list_1[i] for i, param in enumerate(params)}
+        # присваивание новых значений
+        df.loc[(df['Параметр'].isin(update_dict.keys()))&(df['Тип']!='correlation'), 'Array'] = df['Параметр'].map(update_dict)
 
     #  расчет уравнений и таргета 
     df['Array'] = df.apply(apply_func_eq, args=(df, ), axis=1)
@@ -861,24 +866,28 @@ def str_to_plot(string):
     
 
 
-        # print('Коэффициент эксцесса  ', kurtosis(arr_all))
-        # print('Коэффициент асимметрии', skew(arr_all))
-        # print('Минимум ', min(arr_all))
-        # print('Максимум', max(arr_all))
-        # print('Среднее ', np.mean(arr_all))
-        # print('Стандартное отклонение ', np.std(arr_all))
-        # print('Медиана ', np.median(arr_all))
-        # print('5%  ', np.quantile(arr_all, 0.05))
-        # print('10% ', np.quantile(arr_all, 0.1))
-        # print('20% ', np.quantile(arr_all, 0.2))
-        # print('30% ', np.quantile(arr_all, 0.3))
-        # print('40% ', np.quantile(arr_all, 0.4))
-        # print('50% ', np.quantile(arr_all, 0.5))
-        # print('60% ', np.quantile(arr_all, 0.6))
-        # print('70% ', np.quantile(arr_all, 0.7))
-        # print('80% ', np.quantile(arr_all, 0.8))
-        # print('90% ', np.quantile(arr_all, 0.9))
-        # print('95% ', np.quantile(arr_all, 0.95))
+    kurtosis_c = html.P(children=[f'Коэффициент эксцесса:  {round(kurtosis(arr_all), 3)}'], className='article__text')    # print('Коэффициент эксцесса  ', kurtosis(arr_all))
+    skew_c = html.P(children=[f'Коэффициент асимметрии:  {round(skew(arr_all), 3)}'], className='article__text')    # print('Коэффициент асимметрии', skew(arr_all))
+    min_c = html.P(children=[f'Минимум: {round(min(arr_all), 3)}'], className='article__text')    # print('Минимум ', min(arr_all))
+    max_c = html.P(children=[f'Максимум: {round(max(arr_all), 3)}'], className='article__text')    # print('Максимум', max(arr_all))
+    mean_c = html.P(children=[f'Среднее: {round(np.mean(arr_all), 3)}'], className='article__text')    # print('Среднее ', np.mean(arr_all))
+    std_c = html.P(children=[f'Стандартное отклонение: {round(np.std(arr_all), 3)}'], className='article__text')    # print('Стандартное отклонение ', np.std(arr_all))
+    median_c = html.P(children=[f'Медиана:  {round(np.median(arr_all), 3)}'], className='article__text')    # print('Медиана ', np.median(arr_all))
+    q05_c = html.P(children=[f'5%: {round(np.quantile(arr_all, 0.05), 3)}'], className='article__text')    # print('5%  ', np.quantile(arr_all, 0.05))
+    q1_c = html.P(children=[f'10%: {round(np.quantile(arr_all, 0.1), 3)}'], className='article__text')    # print('10% ', np.quantile(arr_all, 0.1))
+    q2_c = html.P(children=[f'20%: {round(np.quantile(arr_all, 0.2), 3)}'], className='article__text')    # print('20% ', np.quantile(arr_all, 0.2))
+    q3_c = html.P(children=[f'30%: {round(np.quantile(arr_all, 0.3), 3)}'], className='article__text')    # print('30% ', np.quantile(arr_all, 0.3))
+    q4_c = html.P(children=[f'40%: {round(np.quantile(arr_all, 0.4), 3)}'], className='article__text')    # print('40% ', np.quantile(arr_all, 0.4))
+    q5_c = html.P(children=[f'50%: {round(np.quantile(arr_all, 0.5), 3)}'], className='article__text')    # print('50% ', np.quantile(arr_all, 0.5))
+    q6_c = html.P(children=[f'60%: {round(np.quantile(arr_all, 0.6), 3)}'], className='article__text')    # print('60% ', np.quantile(arr_all, 0.6))
+    q7_c = html.P(children=[f'70%: {round(np.quantile(arr_all, 0.7), 3)}'], className='article__text')    # print('70% ', np.quantile(arr_all, 0.7))
+    q8_c = html.P(children=[f'80%: {round(np.quantile(arr_all, 0.8), 3)}'], className='article__text')    # print('80% ', np.quantile(arr_all, 0.8))
+    q9_c = html.P(children=[f'90%: {round(np.quantile(arr_all, 0.9), 3)}'], className='article__text')    # print('90% ', np.quantile(arr_all, 0.9))
+    q95_c = html.P(children=[f'95%: {round(np.quantile(arr_all, 0.95), 3)}'], className='article__text')    # print('95% ', np.quantile(arr_all, 0.95))
+    stat_f = html.Div(children=[kurtosis_c, skew_c, min_c, max_c, mean_c, std_c, median_c])
+    stat_s = html.Div(children=[q05_c, q1_c, q2_c, q3_c, q4_c, q5_c, q6_c, q7_c, q8_c, q9_c, q95_c])
+
+    stat_div = html.Div(children=[stat_f, stat_s], className='stat_place')
 
     coef_list = []
     target_min_list = []
@@ -914,10 +923,31 @@ def str_to_plot(string):
     title_second = html.H3(children='Диаграмма торнадо', className='subtitle')
     histPlot = html.Div(children=plot_first(arr_all, target), className='hist__plot', id='histPlot')
     tornadoPlot = html.Div(children=plot_second(arr_all, sorted_labels, sorted_diff, sorted_base), className='tornado__plot', id='tornadoPlot')
-    divdiv = html.Div(children=[title_first, histPlot, title_second, tornadoPlot], className = 'page')
-    return divdiv
+    divdiv = html.Div(children=[stat_div, title_first, histPlot, title_second, tornadoPlot], className = 'page', id = 'plots')
 
+    return divdiv, ['preload_hide']
 
+app.clientside_callback(
+    '''
+    function(id) {
+        const plots = document.getElementById('plots')
+        plots.scrollIntoView()
+        return window.dash_clientside.no_update
+    }
+    ''',
+    Output("preloader","id"),
+    Input("preloader","className"),
+    prevent_initial_call=True
+)
+
+# @callback(
+#     Output("visPlace","id"),
+#     Input("visPlace","id"),
+#     State("preloader", 'style')
+#     prevent_initial_call=True
+# )
+# def setdysplay(n, preload_s):
+#     preload_s= {'display': 'none'} 
 
 # @app.callback(
 #     Output("testDiv","children"),
@@ -932,29 +962,11 @@ def str_to_plot(string):
 #     Input('dropdown-selection', 'value')
 # )
 
-@server.route('/json-example')
-def json_example():
-
-    newApp = Dash()
-    newApp._favicon = "icon.png"
-    newApp.title = "Дашборд"
-    
-    newApp.layout = html.Div(children=[
-        title_first,
-        title_second,
-        html.Div(children=[plot_tornado], className='tornado__plot')
-    ]
-        )
-    
-
-
-    return newApp.index()
-
 if __name__ == '__main__':
     
     # закомментировать перед деплоем
-    # app.run(debug=False)
+    app.run(debug=False)
 
     # раскомментировать перед деплоем
-    context = ('/etc/letsencrypt/live/wf-onco.ru/fullchain.pem', '/etc/letsencrypt/live/wf-onco.ru/privkey.pem')
-    app.run(host='wf-onco.ru', ssl_context=context)
+    # context = ('/etc/letsencrypt/live/wf-onco.ru/fullchain.pem', '/etc/letsencrypt/live/wf-onco.ru/privkey.pem')
+    # app.run(host='wf-onco.ru', ssl_context=context)
