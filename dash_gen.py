@@ -238,9 +238,7 @@ def div_maker(fig):
 
 
 def plot_first(arr_all, target, j=0):
-    fig = px.histogram(arr_all, 
-                        color_discrete_sequence=['white']
-                        )
+    fig = px.histogram(arr_all, color_discrete_sequence=['rgb(158,202,225)'])
         
     fig.update_xaxes(title_text='Значение')
 
